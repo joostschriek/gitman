@@ -18,11 +18,13 @@ namespace gitman
         private string teamname;
         private Permission permission;
         private List<Repository> update_perms = new List<Repository>();
+        private List<string> included;
 
-        public Collaborators(string teamname, Permission permission = Permission.Push)
+        public Collaborators(string teamname, Permission permission = Permission.Push, List<string> only = null)
         {
             this.teamname = teamname;
             this.permission = permission;
+            this.included = only ?? new List<string>();
         }
 
         public override async Task Check(List<Repository> all_repos, Repository repo)
@@ -32,6 +34,13 @@ namespace gitman
             {
                 var all_teams = await Client.Organization.Team.GetAll(Config.Github.Org);
                 team = all_teams.Single(t => t.Name.Equals(teamname, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // Maybe we can skip it if we specified the :only arg
+            if (included.All(r => !repo.Name.Equals(r, StringComparison.CurrentCultureIgnoreCase)))
+            {
+                l($"[SKIP] {repo.Name} is not included in this update", 1);
+                return;
             }
 
             var repo_teams = await Client.Repository.GetAllTeams(repo.Owner.Login, repo.Name);
