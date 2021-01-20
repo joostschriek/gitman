@@ -72,7 +72,7 @@ namespace gitman
                 // Is is set to stale?
                 var dismissStaleReviews = requiredReviewers?.RequiredPullRequestReviews == null || requiredReviewers.RequiredPullRequestReviews.DismissStaleReviews;
                 // Check if code owners are required to review a PR
-                var requireOwners = requiredReviewers?.RequiredPullRequestReviews.RequireCodeOwnerReviews ?? false;
+                var requireOwners = requiredReviewers?.RequiredPullRequestReviews?.RequireCodeOwnerReviews ?? false;
 
                 should = !hasReviewers || dismissStaleReviews || !requireOwners;
             } catch (Octokit.NotFoundException) {
