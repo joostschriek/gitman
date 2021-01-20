@@ -32,12 +32,12 @@ namespace gitman
             if (await ShouldSetReviewers(repo))
             {
                 if (!message.Equals(UPDATE)) message += " and ";
-                message += $"will add {reviewers} review enforcement and unset stale reviewers";
+                message += $"will add {reviewers} review enforcement, unset stale reviewers and require code owners reviews";
             }
 
             if (message.Equals(UPDATE))
             {
-                l($"[OK] {repo.Name} already has {repo.DefaultBranch} branch protection with the number of reviewers and non-strict", 1);
+                l($"[OK] {repo.Name} already has {repo.DefaultBranch} branch protection with the number of reviewers, non-strict and code owners reviews", 1);
             }
             else
             {
@@ -95,7 +95,7 @@ namespace gitman
                     statusChecksUpdate = new BranchProtectionRequiredStatusChecksUpdate(false, EmptyContexts);
                 }
 
-                l($"[MODIFING] Setting branch protections on {repo.Name} to unstrict and with contexts {string.Join(",", statusChecksUpdate.Contexts)} ", 1);
+                l($"[MODIFING] Setting branch protections on {repo.Name} to unstrict, require code owners reviews and with contexts {string.Join(",", statusChecksUpdate.Contexts)} ", 1);
                 await Client.Repository.Branch.UpdateBranchProtection(
                     repo.Owner.Login,
                     repo.Name, 
