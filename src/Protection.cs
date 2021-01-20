@@ -32,12 +32,12 @@ namespace gitman
             if (await ShouldSetReviewers(repo))
             {
                 if (!message.Equals(UPDATE)) message += " and ";
-                message += $"will add {reviewers} review enforcement and unset stale reviewers";
+                message += $"will add {reviewers} review enforcement, unset stale reviewers and require code owners reviews";
             }
 
             if (message.Equals(UPDATE))
             {
-                l($"[OK] {repo.Name} already has {repo.DefaultBranch} branch protection with the number of reviewers and non-strict", 1);
+                l($"[OK] {repo.Name} already has {repo.DefaultBranch} branch protection with the number of reviewers, non-strict and code owners reviews", 1);
             }
             else
             {
@@ -71,8 +71,10 @@ namespace gitman
                 var hasReviewers = requiredReviewers?.RequiredPullRequestReviews == null || requiredReviewers.RequiredPullRequestReviews.RequiredApprovingReviewCount >= reviewers;
                 // Is is set to stale?
                 var dismissStaleReviews = requiredReviewers?.RequiredPullRequestReviews == null || requiredReviewers.RequiredPullRequestReviews.DismissStaleReviews;
+                // Check if code owners are required to review a PR
+                var requireOwners = requiredReviewers?.RequiredPullRequestReviews?.RequireCodeOwnerReviews ?? false;
 
-                should = !hasReviewers || dismissStaleReviews;
+                should = !hasReviewers || dismissStaleReviews || !requireOwners;
             } catch (Octokit.NotFoundException) {
                 // this usually means that it's a new repo, and we have to set it up
                 should = true;
@@ -93,14 +95,14 @@ namespace gitman
                     statusChecksUpdate = new BranchProtectionRequiredStatusChecksUpdate(false, EmptyContexts);
                 }
 
-                l($"[MODIFING] Setting branch protections on {repo.Name} to unstrict and with contexts {string.Join(",", statusChecksUpdate.Contexts)} ", 1);
+                l($"[MODIFING] Setting branch protections on {repo.Name} to unstrict, require code owners reviews and with contexts {string.Join(",", statusChecksUpdate.Contexts)} ", 1);
                 await Client.Repository.Branch.UpdateBranchProtection(
                     repo.Owner.Login,
                     repo.Name, 
                     repo.DefaultBranch, 
                     new BranchProtectionSettingsUpdate(
                         statusChecksUpdate,
-                        new BranchProtectionRequiredReviewsUpdate(false, false, reviewers),
+                        new BranchProtectionRequiredReviewsUpdate(false, true, reviewers),
                         false
                     )
                 );
