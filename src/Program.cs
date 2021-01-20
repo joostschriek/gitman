@@ -89,6 +89,8 @@ namespace gitman
             await new Collaborators(wrapper, "devops-integrations", only: devops_repos) { Client = client }.Do();
             await new Collaborators(wrapper, "chrome", only: chromeos_repos) { Client = client }.Do();
 
+            await new Collaborators(wrapper, "tech-writers", not: admin_repos) { Client = client }.Do();
+
             Console.WriteLine("\n\nChecking branch protections");
             await new Protection() { Client = client }.Do();
 

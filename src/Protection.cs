@@ -71,8 +71,10 @@ namespace gitman
                 var hasReviewers = requiredReviewers?.RequiredPullRequestReviews == null || requiredReviewers.RequiredPullRequestReviews.RequiredApprovingReviewCount >= reviewers;
                 // Is is set to stale?
                 var dismissStaleReviews = requiredReviewers?.RequiredPullRequestReviews == null || requiredReviewers.RequiredPullRequestReviews.DismissStaleReviews;
+                // Check if code owners are required to review a PR
+                var requireOwners = requiredReviewers?.RequiredPullRequestReviews.RequireCodeOwnerReviews ?? false;
 
-                should = !hasReviewers || dismissStaleReviews;
+                should = !hasReviewers || dismissStaleReviews || !requireOwners;
             } catch (Octokit.NotFoundException) {
                 // this usually means that it's a new repo, and we have to set it up
                 should = true;
@@ -100,7 +102,7 @@ namespace gitman
                     repo.DefaultBranch, 
                     new BranchProtectionSettingsUpdate(
                         statusChecksUpdate,
-                        new BranchProtectionRequiredReviewsUpdate(false, false, reviewers),
+                        new BranchProtectionRequiredReviewsUpdate(false, true, reviewers),
                         false
                     )
                 );
