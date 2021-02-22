@@ -91,6 +91,7 @@ namespace gitman
             
             await new Collaborators(wrapper, "developers", only: admin_repos, permission: Permission.Pull ) { Client = client, }.Do();
             await new Collaborators(wrapper, "admins", Permission.Admin) { Client = client }.Do();
+            await new Collaborators(wrapper, "team-admins", only: admin_repos, permission: Permission.Admin) { Client = client }.Do();
 
             Console.WriteLine("\n\nChecking branch protections");
             await new Protection() { Client = client }.Do();
