@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace gitman
 {
-    public abstract class BaseBranchAction : BaseAction
+    public abstract class BaseRepositoryAction : BaseAction
     {
         public abstract Task Check(List<Repository> all_repos, Repository repo);
         public abstract Task Action(Repository repo);
@@ -14,7 +14,7 @@ namespace gitman
         public delegate Task<IEnumerable<Repository>> GetAll();
         public GetAll GetAllRepos;
 
-        public BaseBranchAction() {
+        public BaseRepositoryAction() {
             GetAllRepos = InternalGetAllRepos;
         }
 

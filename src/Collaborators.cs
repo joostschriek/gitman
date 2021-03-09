@@ -12,7 +12,7 @@ namespace gitman
     /// we have to remove the team, and re-add it with the correct permissions. Super 
     /// annoying.
     /// </remarks>
-    public class Collaborators : BaseBranchAction
+    public class Collaborators : BaseRepositoryAction
     {
         private GitTeam team;
         private string teamname;
