@@ -73,8 +73,8 @@ namespace gitman
             client = new GitHubClient(new ProductHeaderValue("SuperMassiveCLI"));
             client.Credentials = new Credentials(Config.Github.User, Config.Github.Token);
 
-            // Console.WriteLine("\n\nChecking merge setting");
-            // await new Merging(squash: true) { Client = client }.Do();
+            Console.WriteLine("\n\nChecking merge setting");
+            await new Merging(squash: true) { Client = client }.Do();
             
             Console.WriteLine("\n\nChecking repo collaborators");
             var wrapper = new GitWrapper(client);
@@ -84,17 +84,17 @@ namespace gitman
                 await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
             }
             
-            // Console.WriteLine("\n\nChecking branch protections");
-            // await new Protection() { Client = client }.Do();
+            Console.WriteLine("\n\nChecking branch protections");
+            await new Protection() { Client = client }.Do();
 
-            // Console.WriteLine("\n\nPerforming team audit");
-            // var audit = new Audit(outputPath: Config.ReportingPath) { Client = client };
-            // await audit.Do();
+            Console.WriteLine("\n\nPerforming team audit");
+            var audit = new Audit(outputPath: Config.ReportingPath) { Client = client };
+            await audit.Do();
 
-            // if (Config.HasTeamsStructureFile)
-            // {
-            //     await CheckTeamMemberships(audit.Data);
-            // }
+            if (Config.HasTeamsStructureFile)
+            {
+                await CheckTeamMemberships(audit.Data);
+            }
         }
 
         private static async Task CheckTeamMemberships(Audit.AuditDto data) 
