@@ -4,13 +4,14 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": ".NET Core Launch (console)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/src/bin/Debug/netcoreapp3.1/gitman.dll",
-            "args": ["-u", "${env:GITHUB_USERNAME}", "-t", "${env:GITHUB_TOKEN}", "--no-dryrun"],
+            "args": ["-u", "${env:GITHUB_USERNAME}", "-t", "${env:GITHUB_TOKEN}", "-repos", "../rdesc.json"],
             "cwd": "${workspaceFolder}/src",
             "console": "internalConsole",
             "stopAtEntry": false

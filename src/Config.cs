@@ -19,7 +19,8 @@ namespace gitman {
             public static bool HasTeamsStructureFile { get => !string.IsNullOrEmpty(TeamStructureFile); }
             public static bool HasRepoStructureFile { get => !string.IsNullOrEmpty(RepoStructureFile); }
 
-            public static bool Validate() => !string.IsNullOrEmpty(Github.User) && !string.IsNullOrEmpty(Github.Token);
+            public static bool Validate() => !string.IsNullOrEmpty(Github.User) && !string.IsNullOrEmpty(Github.Token)
+                && (HasRepoStructureFile ? System.IO.File.Exists(RepoStructureFile) : true);
 
             public static new string ToString() => $"{Github.ToString()} TeamStructure={TeamStructureFile} RepoStructureFile={RepoStructureFile} DryRun={DryRun} Help={Help}";
         }

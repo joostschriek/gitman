@@ -40,6 +40,7 @@ namespace gitman
                 , {"t|token=", "(REQUIRED) A github token that has admin access to the org.", t => Config.Github.Token = t  }
                 , {"o|org=", "The organisation we need to run the actions against (defaults to `sectigo-eng`)", o => Config.Github.Org = o}
                 , {"teams=", "A file with the desired team structure in JSON format. If this is set, this will enforce that team structure (including removing members from teams). We expect a Dictionary where the key is the team name, and the value a list of string with the user login names.", ts => Config.TeamStructureFile = ts }
+                , {"repos=", "A file with the desired repository teams access in JSON format.", rs => Config.RepoStructureFile = rs }
                 , {"report=", "The path were we output the audit report. This defaults to ./", o => Config.ReportingPath = o }
                 , {"no-dryrun", "Do not change anything, just display changes.", d => Config.DryRun = false }
                 , {"h|help", p => Config.Help = true}
@@ -72,38 +73,29 @@ namespace gitman
             client = new GitHubClient(new ProductHeaderValue("SuperMassiveCLI"));
             client.Credentials = new Credentials(Config.Github.User, Config.Github.Token);
 
-            Console.WriteLine("\n\nChecking merge setting");
-            await new Merging(squash: true) { Client = client }.Do();
+            // Console.WriteLine("\n\nChecking merge setting");
+            // await new Merging(squash: true) { Client = client }.Do();
             
             Console.WriteLine("\n\nChecking repo collaborators");
             var wrapper = new GitWrapper(client);
 
-            // internal teams
-            await new Collaborators(wrapper, "developers", not: admin_repos ) { Client = client, }.Do();
-            await new Collaborators(wrapper, "alpha", not: admin_repos ) { Client = client, }.Do();
-            await new Collaborators(wrapper, "bravo", not: admin_repos ) { Client = client, }.Do();
-            await new Collaborators(wrapper, "charlie", not: admin_repos ) { Client = client, }.Do();
-            await new Collaborators(wrapper, "tech-writers", not: admin_repos) { Client = client }.Do();
-            
-            // contractors
-            await new Collaborators(wrapper, "devops-integrations", only: devops_repos) { Client = client }.Do();
-            await new Collaborators(wrapper, "chrome", only: chromeos_repos) { Client = client }.Do();
-            
-            await new Collaborators(wrapper, "developers", only: admin_repos, permission: Permission.Pull ) { Client = client, }.Do();
-            await new Collaborators(wrapper, "admins", Permission.Admin) { Client = client }.Do();
-            await new Collaborators(wrapper, "team-admins", only: admin_repos, permission: Permission.Admin) { Client = client }.Do();
-
-            Console.WriteLine("\n\nChecking branch protections");
-            await new Protection() { Client = client }.Do();
-
-            Console.WriteLine("\n\nPerforming team audit");
-            var audit = new Audit(outputPath: Config.ReportingPath) { Client = client };
-            await audit.Do();
-
-            if (Config.HasTeamsStructureFile)
-            {
-                await CheckTeamMemberships(audit.Data);
+            if (Config.HasRepoStructureFile) {
+                Console.WriteLine("Checking repository access");
+                var rdesc = GetRepositoryDescription();
+                await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
             }
+            
+            // Console.WriteLine("\n\nChecking branch protections");
+            // await new Protection() { Client = client }.Do();
+
+            // Console.WriteLine("\n\nPerforming team audit");
+            // var audit = new Audit(outputPath: Config.ReportingPath) { Client = client };
+            // await audit.Do();
+
+            // if (Config.HasTeamsStructureFile)
+            // {
+            //     await CheckTeamMemberships(audit.Data);
+            // }
         }
 
         private static async Task CheckTeamMemberships(Audit.AuditDto data) 
@@ -119,6 +111,12 @@ namespace gitman
         {
             using var reader = new StreamReader(Config.TeamStructureFile);
             return JSON.Deserialize<Dictionary<string, List<string>>>(reader);
+        }
+
+        private static RepositoryDescription GetRepositoryDescription() 
+        {
+            using var reader = new StreamReader(Config.RepoStructureFile);
+            return JSON.Deserialize<RepositoryDescription>(reader);
         }
     }
 }

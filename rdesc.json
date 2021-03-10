@@ -1,0 +1,17 @@
+{
+    "RepoLists": {   
+            "admin": [ "gutcheck" ]
+    },
+    "TeamDescriptions": [
+        {
+            "TeamName": "alpha",
+            "Permission": "Admin",
+            "Only": "admin"
+        },
+        {
+            "TeamName": "admins",
+            "Permission": "pull",
+            "Not": "admin"
+        }
+    ]
+}
