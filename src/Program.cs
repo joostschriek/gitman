@@ -81,7 +81,6 @@ namespace gitman
 
             if (Config.HasRepoStructureFile) {
                 Console.WriteLine("Checking repository access");
-                var rdesc = GetRepositoryDescription();
                 await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
             }
             
