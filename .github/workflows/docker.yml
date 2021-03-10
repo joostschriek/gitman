@@ -1,30 +1,12 @@
-name: Docker
+name: Containers
 
 on:
   push:
     branches: [ master ]
 
 jobs:
-  # publish_docker:
-  #   name: "Publish docker"
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Publish image to dockerhub
-  #       uses: docker/build-push-action@v2
-  #       with:
-  #         username: joostschriek
-  #         password: ${{ secrets.DOCKERHUB_TOKEN }}
-  #         registry: docker.io
-  #         repository: joostschriek/gitman
-  #         tags: latest
-  #         always_pull: true
-  #         tag_with_ref: true
-  #         file: ./src/Dockerfile
-  #         context: ./src
-  
-  publish_github:
-    name: "Publish github"
+  containers:
+    name: "Publishing containers"
     runs-on: ubuntu-latest
     steps:
       - 
@@ -36,6 +18,13 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
       -
+        name: Login to Dockerhub
+        uses: docker/login-action@v1
+        with:
+          username: 'joostschriek'
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      -
         name: Login to ghcr
         uses: docker/login-action@v1
         with:
@@ -43,11 +32,13 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - 
-        name: Publish image to github
+        name: Publish images
         uses: docker/build-push-action@v2
         with:
           context: ./src
           registry: docker.pkg.github.com
-          tags: ghcr.io/joostschriek/gitman:latest
+          tags: |
+            joostschriek/gitman:latest
+            ghcr.io/joostschriek/gitman:latest
           push: true
           
