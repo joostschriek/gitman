@@ -14,13 +14,15 @@ namespace gitman
     /// </remarks>
     public class Collaborators : BaseRepositoryAction
     {
+        public enum Update { Nothing, Skip, Add, UpdatePermission }
+
+        public IGitWrapper Wrapper { get; set; } 
+     
         private GitTeam team;
         private string teamname;
         private Permission permission;
         private List<Repository> update_perms = new List<Repository>();
         private IEnumerable<string> only, not;
-
-        public IGitWrapper Wrapper { get; set; } 
 
         public Collaborators(IGitWrapper wrapper, string teamname, Permission permission = Permission.Push, IEnumerable<string> only = null, IEnumerable<string> not = null)
         {
@@ -76,13 +78,6 @@ namespace gitman
             {
                 all_repos.Add(repo);
             }
-        }
-
-        public enum Update {
-            Nothing,
-            Skip,
-            Add,
-            UpdatePermission
         }
 
         public Update Should(string repo, IEnumerable<GitTeam> repoTeams, GitTeam targetTeam, Permission targetPermission) {

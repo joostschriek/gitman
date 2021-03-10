@@ -10,7 +10,6 @@ namespace gitman
         public abstract Task Check(List<Repository> all_repos, Repository repo);
         public abstract Task Action(Repository repo);
         public List<Repository> Change { get; set; } = new List<Repository>();
-
         public delegate Task<IEnumerable<Repository>> GetAll();
         public GetAll GetAllRepos;
 
