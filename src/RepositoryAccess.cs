@@ -20,6 +20,11 @@ namespace gitman {
         {
             Wrapper ??= new GitWrapper(base.Client);
 
+            // Make sure the configuration can work
+            l("Validating RepositiryDescription team names and list references");
+            await Validate();
+
+            // Resolve and apply the collaborators
             foreach (var team in desciption.TeamDescriptions)
             {
                 // Resolve the repo lists
@@ -27,11 +32,39 @@ namespace gitman {
                 ResolveList(desciption.RepoLists, team.Not, ref not);
                 ResolveList(desciption.RepoLists, team.Only, ref only);
 
-                // desciption.RepoLists.TryGetValue(team.Not, out not);
-                // desciption.RepoLists.TryGetValue(team.Only, out only);
-
                 // Check the collaborators
                 await new Collaborators(Wrapper, team.TeamName, team.Permission, only, not) { Client = this.Client }.Do();
+            }
+        }
+
+        internal async Task Validate() 
+        {    
+            // Validate team names
+            var existingTeams = await Wrapper.GetTeamsAsync();
+            var teamNames = desciption.TeamDescriptions.Select(t => t.TeamName);
+            var teamDoesNotExist = teamNames.Where(t => !existingTeams.Any(et => et.Equals(t)));
+
+            // validates repo list references to actual repo lists
+            var repoListRefs = desciption.TeamDescriptions.SelectMany(t => new [] { t.Not, t.Only } ).Where(r => !string.IsNullOrEmpty(r)).Distinct();
+            var repoListDoesNotExist = repoListRefs.Where(r => !desciption.RepoLists.ContainsKey(r));
+            
+            var message = "";
+            if (teamDoesNotExist.Any())
+            {
+                message += "Teams do not exist:\n";
+                message += string.Join("\n", teamDoesNotExist.Select(t => $"\t - {t}").ToArray());
+                message += "\n";
+            }
+            if (repoListDoesNotExist.Any())
+            {
+                message += "Repo list referece do not match pre-defined list\n";
+                message += string.Join("\n", repoListDoesNotExist.Select(r => $"\t - {r}").ToArray());
+                message += "\n";
+            }
+
+            if (!string.IsNullOrEmpty(message))
+            {
+                throw new Exception("Validation of RepositoryDescription failed!\n" + message);
             }
         }
 
