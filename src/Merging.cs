@@ -5,7 +5,7 @@ using Octokit;
 
 namespace gitman
 {
-    public class Merging : BaseBranchAction
+    public class Merging : BaseRepositoryAction
     {
         private bool allowSquash, allowMerge, allowRebase;
         private string allowed;

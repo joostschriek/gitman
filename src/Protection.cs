@@ -6,7 +6,7 @@ using Octokit;
 
 namespace gitman
 {
-    public class Protection : BaseBranchAction
+    public class Protection : BaseRepositoryAction
     {
         private readonly IReadOnlyList<string> EmptyContexts;
         private int reviewers;
