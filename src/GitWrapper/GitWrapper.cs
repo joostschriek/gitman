@@ -27,6 +27,12 @@ namespace gitman
             return new GitTeam(team.Value);
         }
 
+        public async Task<IEnumerable<string>> GetTeamsAsync()
+        {
+            await CacheTeamsAsync();
+            return teamsByIds.Select(t => t.Value.Name);
+        }       
+
         public class Repository : IRepo {
             private Dictionary<string, IEnumerable<GitTeam>> teamsByRepo = new Dictionary<string, IEnumerable<GitTeam>>();
             private GitWrapper wrapper;
@@ -62,5 +68,6 @@ namespace gitman
             var teams = await client.Organization.Team.GetAll(Config.Github.Org);
             teamsByIds = teams.ToDictionary(t => t.Name, t => t);
         }
+
     }
 }
