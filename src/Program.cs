@@ -91,13 +91,14 @@ namespace gitman
                 await new Collaborators(wrapper, "bravo", not: admin_repos ) { Client = client, }.Do();
                 await new Collaborators(wrapper, "charlie", not: admin_repos ) { Client = client, }.Do();
                 await new Collaborators(wrapper, "tech-writers", not: admin_repos) { Client = client }.Do();
-                
+
                 // contractors
                 await new Collaborators(wrapper, "devops-integrations", only: devops_repos) { Client = client }.Do();
                 await new Collaborators(wrapper, "chrome", only: chromeos_repos) { Client = client }.Do();
                 
                 await new Collaborators(wrapper, "developers", only: admin_repos, permission: Permission.Pull ) { Client = client, }.Do();
                 await new Collaborators(wrapper, "admins", Permission.Admin) { Client = client }.Do();
+                await new Collaborators(wrapper, "team-admins", only: admin_repos, permission: Permission.Admin) { Client = client }.Do();
             }
 
             Console.WriteLine("\n\nChecking branch protections");
