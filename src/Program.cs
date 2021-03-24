@@ -93,8 +93,13 @@ namespace gitman
 
             if (Config.HasTeamsStructureFile)
             {
+                var teams = GetTeams();
+                
+                Console.WriteLine("\n\nChecking teams");
+                await new Teams(audit.Data, teams) { Client = client }.Do();
+
                 Console.WriteLine("\n\nChecking teams memberships");
-                await new Memberships(audit.Data, GetTeams()) { Client = client }.Do();;
+                await new TeamMemberships(audit.Data, teams) { Client = client }.Do();
             }
         }
 
