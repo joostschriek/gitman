@@ -93,19 +93,11 @@ namespace gitman
 
             if (Config.HasTeamsStructureFile)
             {
-                await CheckTeamMemberships(audit.Data);
+                Console.WriteLine("\n\nChecking teams memberships");
+                await new Memberships(audit.Data, GetTeams()) { Client = client }.Do();;
             }
         }
 
-        private static async Task CheckTeamMemberships(Audit.AuditDto data) 
-        {
-            Console.WriteLine("\n\nChecking teams memberships");
-            foreach (var team in GetTeams())
-            {
-                await new Memberships(data, team.Key, team.Value) { Client = client }.Do();
-            }
-        }
-        
         private static Dictionary<string, List<string>> GetTeams() 
         {
             using var reader = new StreamReader(Config.TeamStructureFile);
