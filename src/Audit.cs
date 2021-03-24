@@ -22,7 +22,7 @@ namespace gitman
         public class AuditDto { 
             public Dictionary<int, string> Teams {get; set;} = new Dictionary<int, string>();
             public List<string>  Members {get; set;} = new List<String>();
-            public Dictionary<string, List<string>> MembersByTeam { get; set; } = new Dictionary<string, List<string>>();
+            public Dictionary<string, IEnumerable<string>> MembersByTeam { get; set; } = new Dictionary<string, IEnumerable<string>>();
             public List<RepoAuditDto> Repositories { get; set; } = new List<RepoAuditDto>();
 
             public string ToString(int indent = 0)
@@ -85,7 +85,7 @@ namespace gitman
             {
                 Data.Teams.Add(team.Id, team.Name);
                 var mbs = await Client.Organization.Team.GetAllMembers(team.Id);
-                Data.MembersByTeam.Add(team.Name, mbs.Select(m => m.Login).ToList());
+                Data.MembersByTeam.Add(team.Name, mbs.Select(m => m.Login));
             }           
             
             // Get all our members
