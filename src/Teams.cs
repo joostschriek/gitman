@@ -40,12 +40,12 @@ namespace gitman
             {
                 if (action.Action == Acting.Act.Add)
                 {
-                    l($"[UPDATE] Will add {action.Name} team to {Config.Github.Org}", 2);
+                    l($"[UPDATE] Will create {action.Name} team to {Config.Github.Org}", 2);
 
                     if (Config.DryRun) continue;
 
                     var team = await this.Client.Organization.Team.Create(Config.Github.Org, new NewTeam(action.Name));
-                    l($"[MODIFIED] Create team {action.Name} ({team.Id})");
+                    l($"[MODIFIED] Created team {action.Name} ({team.Id})");
                     // Ugly update the cache :/
                     auditData.Teams.Add(team.Id, team.Name);
                 }
