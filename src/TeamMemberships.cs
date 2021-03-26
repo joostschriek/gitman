@@ -25,13 +25,22 @@ namespace gitman
                 throw new Exception("Audit data has to be set!");
             }
 
+            // No need to do anything else if there are non-existing members on the list
+            var usersDoNotExist = new List<string>();
             foreach (var team in this.teams)
             {
-                var proposed_members = team.Value;
+                usersDoNotExist.AddRange(await ValidateUsers(team.Value));
+            }
+
+            foreach (var team in this.teams)
+            {
+                // Filter out the users we know that doe not exist
+                var proposed_members = team.Value.Except(usersDoNotExist);
                 var team_name = team.Key;
 
                 var team_id = auditData.Teams.SingleOrDefault(t => t.Value.Equals(team_name)).Key;
                 var actions = new List<Acting>();
+
 
                 // We didn't find the team in the cache, that means this is a new team!
                 if (auditData.Teams.ContainsValue(team_name))
@@ -80,6 +89,47 @@ namespace gitman
                     }
                 }
             }
+
+            // We make sure that we can process the authoritative teams list while excluding the not existing 
+            // members because we want to make sure the membership list is as up to date as possible. Otherwise 
+            // there might be a scenario where were a malicious employee (on us trying to remove them from 
+            // github) could rename their account to something higher in the alphabet, and could extend their 
+            // stay and wreck havoc/steal all our big balls of content.
+            // 
+            // We eventually do want to crash as to indicate something is bonkers, but only after we processed
+            // the valid members.
+            if (usersDoNotExist.Any())
+            {
+                var message = "Users do not exist:\n";
+                message += string.Join("\n", usersDoNotExist.Select(u => $"\t{u}"));
+                message += "\n";
+                
+                // make the output a bit more readable
+                l(""); 
+
+                throw new Exception("Validation of Team Meberships failed!\n" + message);
+            }
+        }
+
+        private async Task<IEnumerable<string>> ValidateUsers(IEnumerable<string> usernames)
+        {
+            // Do the users exist or not?
+            var doesNotExist = new List<String>();
+            foreach (var username in usernames)
+            {
+                User user = null;
+
+                try {
+                    user = await Client.User.Get(username);
+                } catch (Octokit.NotFoundException) { }
+
+                if (user == null)
+                {
+                    doesNotExist.Add(username);
+                }
+            }
+
+            return doesNotExist;
         }
     }
 }
