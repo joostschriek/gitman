@@ -42,7 +42,8 @@ namespace gitman
                 , {"teams=", "A file with the desired team structure in JSON format. If this is set, this will enforce that team structure (including removing members from teams). We expect a Dictionary where the key is the team name, and the value a list of string with the user login names.", ts => Config.TeamStructureFile = ts }
                 , {"repos=", "A file with the desired repository teams access in JSON format.", rs => Config.RepoStructureFile = rs }
                 , {"report=", "The path were we output the audit report. This defaults to ./", o => Config.ReportingPath = o }
-                , {"no-dryrun", "Do not change anything, just display changes.", d => Config.DryRun = false }
+                , {"d|dryrun=", "Should this run authorative updates (`no`-dryrun), or only display changes (`yes` do a dryrun please). Must be either 'yes' or 'no'. Defaults to 'yes'.", (string dry) => Config.DryRunMode = dry }
+                , {"no-dryrun", "Run authoratives updates. This can be distructive. This is the greedy option over --dryrun=yes|no.", d => Config.DryRunMode = "no" }
                 , {"h|help", p => Config.Help = true}
             };
 
@@ -73,34 +74,34 @@ namespace gitman
             client = new GitHubClient(new ProductHeaderValue("SuperMassiveCLI"));
             client.Credentials = new Credentials(Config.Github.User, Config.Github.Token);
 
-            Console.WriteLine("\n\nChecking merge setting");
-            await new Merging(squash: true) { Client = client }.Do();
+            // Console.WriteLine("\n\nChecking merge setting");
+            // await new Merging(squash: true) { Client = client }.Do();
             
-            Console.WriteLine("\n\nChecking repo collaborators");
-            var wrapper = new GitWrapper(client);
+            // Console.WriteLine("\n\nChecking repo collaborators");
+            // var wrapper = new GitWrapper(client);
 
-            if (Config.HasRepoStructureFile) {
-                Console.WriteLine("Checking repository access");
-                await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
-            }
+            // if (Config.HasRepoStructureFile) {
+            //     Console.WriteLine("Checking repository access");
+            //     await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
+            // }
 
-            Console.WriteLine("\n\nChecking branch protections");
-            await new Protection() { Client = client }.Do();
+            // Console.WriteLine("\n\nChecking branch protections");
+            // await new Protection() { Client = client }.Do();
 
-            Console.WriteLine("\n\nPerforming team audit");
-            var audit = new Audit(outputPath: Config.ReportingPath) { Client = client };
-            await audit.Do();
+            // Console.WriteLine("\n\nPerforming team audit");
+            // var audit = new Audit(outputPath: Config.ReportingPath) { Client = client };
+            // await audit.Do();
 
-            if (Config.HasTeamsStructureFile)
-            {
-                var teams = GetTeams();
+            // if (Config.HasTeamsStructureFile)
+            // {
+            //     var teams = GetTeams();
                 
-                Console.WriteLine("\n\nChecking teams");
-                await new Teams(audit.Data, teams) { Client = client }.Do();
+            //     Console.WriteLine("\n\nChecking teams");
+            //     await new Teams(audit.Data, teams) { Client = client }.Do();
 
-                Console.WriteLine("\n\nChecking teams memberships");
-                await new TeamMemberships(audit.Data, teams) { Client = client }.Do();
-            }
+            //     Console.WriteLine("\n\nChecking teams memberships");
+            //     await new TeamMemberships(audit.Data, teams) { Client = client }.Do();
+            // }
         }
 
         private static Dictionary<string, List<string>> GetTeams() 
