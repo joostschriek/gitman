@@ -40,24 +40,24 @@ namespace gitman
             {
                 if (action.Action == Acting.Act.Add)
                 {
-                    l($"[UPDATE] Will create {action.Name} team to {Config.Github.Org}", 2);
+                    l($"[UPDATE] Will create {action.Name} team to {Config.Github.Org}", 1);
 
                     if (Config.DryRun) continue;
 
                     var team = await this.Client.Organization.Team.Create(Config.Github.Org, new NewTeam(action.Name));
-                    l($"[MODIFIED] Created team {action.Name} ({team.Id})");
+                    l($"[MODIFIED] Created team {action.Name} ({team.Id})", 1);
                     // Ugly update the cache :/
                     auditData.Teams.Add(team.Id, team.Name);
                 }
                 else
                 {
                     var team_id = auditData.Teams.Single(t => t.Value.Equals(action.Name)).Key;
-                    l($"[UPDATE] Will remove {action.Name} ({team_id}) team from {Config.Github.Org}", 2);
+                    l($"[UPDATE] Will remove {action.Name} ({team_id}) team from {Config.Github.Org}", 1);
 
                     if (Config.DryRun) continue;
 
                     await this.Client.Organization.Team.Delete(team_id);
-                    l($"[MODIFIED] Removed team {action.Name} ({team_id})");
+                    l($"[MODIFIED] Removed team {action.Name} ({team_id})", 1);
                     // Ugly update the cache :/
                     auditData.Teams.Remove(team_id);
                 }
