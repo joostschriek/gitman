@@ -11,27 +11,6 @@ namespace gitman
     class Program
     {
         private static GitHubClient client;
-        private static List<string> devops_repos = new List<string> {
-            "devops-chef"
-            , "devops-saltstack"
-            , "devops-jenkins"
-            , "devops-terraform"
-            , "devops-vault"
-            , "devops-sdk"
-            , "devops-sdk-pycert"
-            , "devops-k8s"
-            , "devops-ansible"
-            , "devops-sdk-jcert"
-            , "devops-sdk-gocert"
-            , "devops-docker"
-        };
-        private static List<string> chromeos_repos = new List<string> {
-            "android-scm-integration",
-            "chromeos-scm-integration"
-        };
-        private static List<string> admin_repos = new List<string> {
-            "gutcheck"
-        };
 
         static async Task Main(string[] args)
         {
@@ -74,34 +53,34 @@ namespace gitman
             client = new GitHubClient(new ProductHeaderValue("SuperMassiveCLI"));
             client.Credentials = new Credentials(Config.Github.User, Config.Github.Token);
 
-            // Console.WriteLine("\n\nChecking merge setting");
-            // await new Merging(squash: true) { Client = client }.Do();
+            Console.WriteLine("\n\nChecking merge setting");
+            await new Merging(squash: true) { Client = client }.Do();
             
-            // Console.WriteLine("\n\nChecking repo collaborators");
-            // var wrapper = new GitWrapper(client);
+            Console.WriteLine("\n\nChecking repo collaborators");
+            var wrapper = new GitWrapper(client);
 
-            // if (Config.HasRepoStructureFile) {
-            //     Console.WriteLine("Checking repository access");
-            //     await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
-            // }
+            if (Config.HasRepoStructureFile) {
+                Console.WriteLine("Checking repository access");
+                await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
+            }
 
-            // Console.WriteLine("\n\nChecking branch protections");
-            // await new Protection() { Client = client }.Do();
+            Console.WriteLine("\n\nChecking branch protections");
+            await new Protection() { Client = client }.Do();
 
-            // Console.WriteLine("\n\nPerforming team audit");
-            // var audit = new Audit(outputPath: Config.ReportingPath) { Client = client };
-            // await audit.Do();
+            Console.WriteLine("\n\nPerforming team audit");
+            var audit = new Audit(outputPath: Config.ReportingPath) { Client = client };
+            await audit.Do();
 
-            // if (Config.HasTeamsStructureFile)
-            // {
-            //     var teams = GetTeams();
+            if (Config.HasTeamsStructureFile)
+            {
+                var teams = GetTeams();
                 
-            //     Console.WriteLine("\n\nChecking teams");
-            //     await new Teams(audit.Data, teams) { Client = client }.Do();
+                Console.WriteLine("\n\nChecking teams");
+                await new Teams(audit.Data, teams) { Client = client }.Do();
 
-            //     Console.WriteLine("\n\nChecking teams memberships");
-            //     await new TeamMemberships(audit.Data, teams) { Client = client }.Do();
-            // }
+                Console.WriteLine("\n\nChecking teams memberships");
+                await new TeamMemberships(audit.Data, teams) { Client = client }.Do();
+            }
         }
 
         private static Dictionary<string, List<string>> GetTeams() 
