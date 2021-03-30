@@ -5,6 +5,12 @@ namespace gitman {
     public class RepositoryDescription {
         public IDictionary<string, IEnumerable<string>> RepoLists { get; set; }
         public IEnumerable<TeamDesciption> TeamDescriptions { get; set; }
+
+        public void ResolveList(string listname, out IEnumerable<string> list) {
+            if (string.IsNullOrEmpty(listname) || !RepoLists.TryGetValue(listname, out list)) {
+                list = new List<string>();
+            }
+        }
     }
 
     public class TeamDesciption {
