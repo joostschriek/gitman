@@ -46,11 +46,14 @@ namespace gitman
                 // We didn't find the team in the cache, that means this is a new team!
                 if (auditData.Teams.ContainsValue(team_name))
                 {
+                    // Who should we add?
                     actions.AddRange(proposed_members.Where(m => !auditData.MembersByTeam[team_name].Any(gm => gm.Equals(m))).Distinct().Select(m => new Acting { Action = Acting.Act.Add, Name = m }));
+                    // Who should we remove?
                     actions.AddRange(auditData.MembersByTeam[team_name].Where(m => !proposed_members.Contains(m)).Distinct().Select(m => new Acting { Action = Acting.Act.Remove, Name = m }));
                 }
                 else
                 {
+                    // This is a new team, so we should add all the proposed members
                     actions.AddRange(proposed_members.Select(m => new Acting { Action = Acting.Act.Add, Name = m }));
                 }
 
@@ -63,11 +66,19 @@ namespace gitman
 
                         if (Config.DryRun) continue;
 
-                        var res = await Client.Organization.Team.AddOrEditMembership(team_id, action.Name, new UpdateTeamMembership(TeamRole.Member));
-                        l($"[MODIFIED] Added {action.Name} to {team_name} ({team_id}", 1);
-                        // Ugly update the cache :/
-                        auditData.MembersByTeam[team_name].Add(action.Name);
-                        auditData.Members.Add(action.Name);
+                        try
+                        {
+                            await Client.Organization.Team.AddOrEditMembership(team_id, action.Name, new UpdateTeamMembership(TeamRole.Member));
+                            l($"[MODIFIED] Added {action.Name} to {team_name} ({team_id}", 1);
+                            // Ugly update the cache :/
+                            auditData.MembersByTeam[team_name].Add(action.Name);
+                            auditData.Members.Add(action.Name);
+                        }
+                        catch (Octokit.ApiException apiEx)
+                        {
+                            l($"[ERROR] A Github API error occured and we weren't able to add {action.Name} to {team_name}");
+                            l($"Message: {apiEx.Message}\nStatusCode:{apiEx.StatusCode}\nException:{apiEx.InnerException}\n\n{apiEx.Source}\n");
+                        }
                     }
                     else
                     {
@@ -75,17 +86,25 @@ namespace gitman
 
                         if (Config.DryRun) continue;
 
-                        var res = await Client.Organization.Team.RemoveMembership(team_id, action.Name);
-                        if (res)
+                        try
                         {
-                            l($"[MODIFIED] Removed {action.Name} from {team_name} ({team_id})", 1);
-                            // Ugly update the cache :/
-                            auditData.MembersByTeam[team_name].Remove(action.Name);
-                            auditData.Members.Remove(action.Name);
+                            var res = await Client.Organization.Team.RemoveMembership(team_id, action.Name);
+                            if (res)
+                            {
+                                l($"[MODIFIED] Removed {action.Name} from {team_name} ({team_id})", 1);
+                                // Ugly update the cache :/
+                                auditData.MembersByTeam[team_name].Remove(action.Name);
+                                auditData.Members.Remove(action.Name);
+                            }
+                            else
+                            {
+                                l($"[ERROR] Could not remove {action.Name} from {team_name} ({team_id})", 1);
+                            }
                         }
-                        else
+                        catch (Octokit.ApiException apiEx)
                         {
-                            l($"[ERROR] Could not remove {action.Name} from {team_name} ({team_id})", 1);
+                            l($"[ERROR] A Github API error occured and we weren't able to remove {action.Name} to {team_name}");
+                            l($"Message: {apiEx.Message}\nStatusCode:{apiEx.StatusCode}\nException:{apiEx.InnerException}\n\n{apiEx.Source}\n");
                         }
                     }
                 }
