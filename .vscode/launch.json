@@ -11,7 +11,12 @@
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/src/bin/Debug/netcoreapp3.1/gitman.dll",
-            "args": ["-u", "${env:GITHUB_USERNAME}", "-t", "${env:GITHUB_TOKEN}", "-repos", "../rdesc.json"],
+            "args": [
+                "-u", "${env:GITHUB_USERNAME}", 
+                "-t", "${env:GITHUB_TOKEN}", 
+                "--teams", "/home/joost/src/sectigo-eng/gutcheck/teams.json", 
+                "--repos", "/home/joost/src/sectigo-eng/gutcheck/repos.json"
+            ],
             "cwd": "${workspaceFolder}/src",
             "console": "internalConsole",
             "stopAtEntry": false

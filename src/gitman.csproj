@@ -9,6 +9,7 @@
     <PackageReference Include="jil" Version="2.17.0" />
     <PackageReference Include="mono.options" Version="6.6.0.161" />
     <PackageReference Include="octokit" Version="0.48.0" />
+    <PackageReference Include="Octokit.GraphQL" Version="0.1.7-beta" />
   </ItemGroup>
 
 </Project>

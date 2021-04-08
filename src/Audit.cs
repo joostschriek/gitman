@@ -14,9 +14,10 @@ namespace gitman
         public AuditDto Data { get; private set; } = new AuditDto();
 
         private string outputPath;
-
+        private IGitWrapper wrapper;
         public Audit(string outputPath = null) {
             this.outputPath = outputPath;
+            this.wrapper = new GitWrapper(base.Client);
         }
 
         public class AuditDto { 
@@ -91,28 +92,28 @@ namespace gitman
             // Get all our members
             Data.Members.AddRange((await Client.Organization.Member.GetAll(Config.Github.Org, new ApiOptions { PageSize = 1000 })).Select(m => m.Login));
 
-            // Get all the repos
-            var rs = new List<RepoAuditDto>();
-            var repos = await Client.Repository.GetAllForOrg(Config.Github.Org);
+            // // Get all the repos
+            // var rs = new List<RepoAuditDto>();
+            // var repos = await Client.Repository.GetAllForOrg(Config.Github.Org);
             
-            // Get all their branches and sort them on
-            foreach (var repo in repos) 
-            {
-                var r = new RepoAuditDto { Name = repo.Name };
-                var branches = await Client.Repository.Branch.GetAll(Config.Github.Org, repo.Name);
-                r.Branches.AddRange(branches
-                    .Select(async (b) => await BranchAuditFrom(r.Name, b))
-                    .Select(t => t.Result));
-                Data.Repositories.Add(r);
-            }
+            // // Get all their branches and sort them on
+            // foreach (var repo in repos) 
+            // {
+            //     var r = new RepoAuditDto { Name = repo.Name };
+            //     var branches = await Client.Repository.Branch.GetAll(Config.Github.Org, repo.Name);
+            //     r.Branches.AddRange(branches
+            //         .Select(async (b) => await BranchAuditFrom(r.Name, b))
+            //         .Select(t => t.Result));
+            //     Data.Repositories.Add(r);
+            // }
 
-            if (!string.IsNullOrEmpty(outputPath))
-            {
-                var path = Path.Combine(outputPath, $"audit_{DateTime.Now.ToString("yyy-MM-dd-hhmm")}.json");
-                l($"Saving audit repot to {path}", 1);
-                using var writer = new StreamWriter(path);
-                JSON.Serialize(Data, writer, Jil.Options.PrettyPrintCamelCase);
-            }
+            // if (!string.IsNullOrEmpty(outputPath))
+            // {
+            //     var path = Path.Combine(outputPath, $"audit_{DateTime.Now.ToString("yyy-MM-dd-hhmm")}.json");
+            //     l($"Saving audit repot to {path}", 1);
+            //     using var writer = new StreamWriter(path);
+            //     JSON.Serialize(Data, writer, Jil.Options.PrettyPrintCamelCase);
+            // }
 
             l(Data.ToString(1));
         }

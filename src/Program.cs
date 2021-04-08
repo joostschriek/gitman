@@ -53,19 +53,19 @@ namespace gitman
             client = new GitHubClient(new ProductHeaderValue("SuperMassiveCLI"));
             client.Credentials = new Credentials(Config.Github.User, Config.Github.Token);
 
-            Console.WriteLine("\n\nChecking merge setting");
-            await new Merging(squash: true) { Client = client }.Do();
+            // Console.WriteLine("\n\nChecking merge setting");
+            // await new Merging(squash: true) { Client = client }.Do();
             
-            Console.WriteLine("\n\nChecking repo collaborators");
-            var wrapper = new GitWrapper(client);
+            // Console.WriteLine("\n\nChecking repo collaborators");
+            // var wrapper = new GitWrapper(client);
 
-            if (Config.HasRepoStructureFile) {
-                Console.WriteLine("Checking repository access");
-                await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
-            }
+            // if (Config.HasRepoStructureFile) {
+            //     Console.WriteLine("Checking repository access");
+            //     await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
+            // }
 
-            Console.WriteLine("\n\nChecking branch protections");
-            await new Protection() { Client = client }.Do();
+            // Console.WriteLine("\n\nChecking branch protections");
+            // await new Protection() { Client = client }.Do();
 
             Console.WriteLine("\n\nPerforming team audit");
             var audit = new Audit(outputPath: Config.ReportingPath) { Client = client };
@@ -75,6 +75,9 @@ namespace gitman
             {
                 var teams = GetTeams();
                 
+                Console.WriteLine("Checking the right permissions");
+                await new OnlyTeams(GetRepositoryDescription(), audit.Data, teams) { Client = client }.Do();
+
                 Console.WriteLine("\n\nChecking teams");
                 await new Teams(audit.Data, teams) { Client = client }.Do();
 

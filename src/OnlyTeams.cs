@@ -4,12 +4,11 @@ using System.Threading.Tasks;
 using System.Linq;
 
 using Octokit;
-
+using Octokit.GraphQL;
 namespace gitman
 {
     public class OnlyTeams : BaseRepositoryAction
     {
-
         private readonly RepositoryDescription rdesc;
         private readonly Audit.AuditDto audit;
         private readonly Dictionary<string, List<string>> teams;
@@ -26,6 +25,17 @@ namespace gitman
             l($"Checking collaborators permissions for {repo.Name}");
             // For all the collaborators get their current permissions
             var collabs = await Client.Repository.Collaborator.GetAll(Config.Github.Org, repo.Name);
+
+            var conn = new Octokit.GraphQL.Connection(new Octokit.GraphQL.ProductHeaderValue("SuperMassiveCLI"), Config.Github.Token);
+            
+            var query = new Octokit.GraphQL.Query()
+                .Repository(Variable.Var(Config.Github.Org), Variable.Var(repo.Name))
+                .Collaborators()
+                .Edges
+                .Select(re => new {
+                    perm = re.Permission
+                });
+            var res = await conn.Run(query);
             foreach (var member in collabs)
             {
                 var currentPermission = await Client.Repository.Collaborator.ReviewPermission(Config.Github.Org, repo.Name, member.Login);
