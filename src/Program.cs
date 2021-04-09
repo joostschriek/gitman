@@ -21,8 +21,9 @@ namespace gitman
                 , {"teams=", "A file with the desired team structure in JSON format. If this is set, this will enforce that team structure (including removing members from teams). We expect a Dictionary where the key is the team name, and the value a list of string with the user login names.", ts => Config.TeamStructureFile = ts }
                 , {"repos=", "A file with the desired repository teams access in JSON format.", rs => Config.RepoStructureFile = rs }
                 , {"report=", "The path were we output the audit report. This defaults to ./", o => Config.ReportingPath = o }
-                , {"d|dryrun=", "Should this run authorative updates (`no`-dryrun), or only display changes (`yes` do a dryrun please). Must be either 'yes' or 'no'. Defaults to 'yes'.", (string dry) => Config.DryRunMode = dry }
-                , {"no-dryrun", "Run authoratives updates. This can be distructive. This is the greedy option over --dryrun=yes|no.", d => Config.DryRunMode = "no" }
+                , {"d|dryrun=", "Should this run authorative updates (`no`-dryrun), or only display changes (`yes` do a dryrun please). Must be either 'yes' or 'no'. Defaults to 'yes'.", (string dry) => Config.DryRunMode = dry.ToLower() }
+                , {"no-dryrun", "Run authoratives updates. This can be destructive. This is the greedy option over --dryrun=yes|no.", d => Config.DryRunMode = "no" }
+                , {"validate=", "Should this run include validation checks (does X exist or not). Excluding these saves significant api hits for rate limiting. Must be either `yes` or `no`. Defaults to `yes`)", (string val) => Config.ValidationMode = val.ToLower() }
                 , {"h|help", p => Config.Help = true}
             };
 
@@ -37,7 +38,7 @@ namespace gitman
                 return;
             }
 
-            if (!Config.Validate() || Config.Help)
+            if (!Config.ValidateInput() || Config.Help)
             {
                 opts.WriteOptionDescriptions(Console.Out);
                 return;
