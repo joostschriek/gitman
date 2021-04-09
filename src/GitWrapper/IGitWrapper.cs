@@ -5,6 +5,7 @@ namespace gitman
 {
     public interface IGitWrapper {
         IRepo Repo { get; set; }
+        IOrganization Org { get; set; }
         Task<GitTeam> GetTeamAsync(string name);
         Task<IEnumerable<string>> GetTeamsAsync();
     }

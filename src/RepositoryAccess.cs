@@ -20,9 +20,12 @@ namespace gitman {
         {
             Wrapper ??= new GitWrapper(base.Client);
 
-            // Make sure the configuration can work
-            l("Validating RepositiryDescription team names and list references");
-            await Validate();
+            if (Config.Validate)
+            {
+                // Make sure the configuration can work
+                l("Validating RepositiryDescription team names and list references");
+                await Validate();
+            }
 
             // Resolve and apply the collaborators
             foreach (var team in desciption.TeamDescriptions)
