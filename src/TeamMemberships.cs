@@ -10,12 +10,13 @@ namespace gitman
     {
         private Audit.AuditDto auditData;
         private IDictionary<string, List<string>> teams;
+        private IGitWrapper wrapper;
 
         public TeamMemberships(Audit.AuditDto auditData, Dictionary<string, List<string>> teams)
         {
             this.auditData = auditData;
-
             this.teams = teams;
+            this.wrapper = new GitWrapper(Client);
         }
 
         public override async Task Do()
@@ -25,12 +26,24 @@ namespace gitman
                 throw new Exception("Audit data has to be set!");
             }
 
-            // No need to do anything else if there are non-existing members on the list
-            l("Validating usernames");
             var usersDoNotExist = new List<string>();
-            foreach (var team in this.teams)
+            var orgHasEnoughSeats = true;
+            models.Plan plan = null;
+            if (Config.Validate)
             {
-                usersDoNotExist.AddRange(await ValidateUsers(team.Value));
+                // We want to know if any of the users do not exsit, but we still want 
+                // to process all the actions we can. This is to prevent blocking a user
+                // addition or removal.
+                l("Validating usernames");
+                foreach (var team in this.teams)
+                {
+                    usersDoNotExist.AddRange(await ValidateUsers(team.Value));
+                }
+
+                // Make sure we have enough seats available in our plan. If we cannot add 
+                l("Validating available license seats");
+                plan = await wrapper.Org.GetPlanAsync();
+                orgHasEnoughSeats = plan.Seats > teams.Values.SelectMany(m => m).Distinct().Count();
             }
 
             foreach (var team in this.teams)
@@ -41,7 +54,6 @@ namespace gitman
 
                 var team_id = auditData.Teams.SingleOrDefault(t => t.Value.Equals(team_name)).Key;
                 var actions = new List<Acting>();
-
 
                 // We didn't find the team in the cache, that means this is a new team!
                 if (auditData.Teams.ContainsValue(team_name))
@@ -62,7 +74,17 @@ namespace gitman
                 {
                     if (action.Action == Acting.Act.Add)
                     {
-                        l($"[UPDATE] Will add {action.Name} to team {team_name} ({team_id}) as a member", 1);
+                        // We only want to process the removals if we don't have enough seats
+                        if (orgHasEnoughSeats)
+                        {
+                            l($"[UPDATE] Will add {action.Name} to team {team_name} ({team_id}) as a member", 1);
+                        }
+                        else
+                        {
+                            l($"[SKIP] Will not add {action.Name} to team {team_name} ({team_id}) as a member becaues we do not have enough license seats", 1);
+                            continue;
+                        }
+
 
                         if (Config.DryRun) continue;
 
@@ -118,15 +140,24 @@ namespace gitman
             // 
             // We eventually do want to crash as to indicate something is bonkers, but only after we processed
             // the valid members.
+            var message = "";
+            if (!orgHasEnoughSeats)
+            {
+                var memberCount = teams.Values.SelectMany(m => m).Distinct().Count();
+                message += $"We do not have enough license seats available. We required {memberCount} but we have {plan.Seats}.";
+                message += "\n";
+            }
             if (usersDoNotExist.Any())
             {
-                var message = "Users do not exist:\n";
+                message += "Users do not exist:\n";
                 message += string.Join("\n", usersDoNotExist.Select(u => $"\t{u}"));
                 message += "\n";
-                
-                // make the output a bit more readable
-                l(""); 
+            }
 
+            if (!string.IsNullOrEmpty(message))
+            {
+                // make the output a bit more readable
+                l("");
                 throw new Exception("Validation of Team Meberships failed!\n" + message);
             }
         }
@@ -139,9 +170,11 @@ namespace gitman
             {
                 User user = null;
 
-                try {
+                try
+                {
                     user = await Client.User.Get(username);
-                } catch (Octokit.NotFoundException) { }
+                }
+                catch (Octokit.NotFoundException) { }
 
                 if (user == null)
                 {
