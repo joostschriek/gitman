@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using Octokit;
 using System.Linq;
 using System;
+using System.Text;
+using gitman.models;
 
 namespace gitman
 {
@@ -11,10 +13,12 @@ namespace gitman
         private IGitHubClient client;
         
         public IRepo Repo { get; set; }
+        public IOrganization Org { get; set;}
 
         public GitWrapper(IGitHubClient client) {
             this.client = client;
             this.Repo = new Repository(this);
+            this.Org = new Organization();
         }
 
         public async Task<GitTeam> GetTeamAsync(string name) {
@@ -58,7 +62,34 @@ namespace gitman
                 }
 
                 return updated;
-            } 
+            }
+        }
+        
+        // But why use Gitman.Http instead of the official Octokit.Client? Long story short, the official 
+        // API client does not return the organisations plan as described in the API docs. They omit the 
+        // useful information, like seat and filled seat counts :) Since we would like to verify that we 
+        // have enough seats, we have to build some http requests of our own.
+        public class Organization : Gitman.Http, IOrganization
+        {
+            // The plan is unlikely to change (a lot) during runs. If it does change (members added etc), we
+            // only really care if we can do the _current set_ of changes.
+            private models.Plan cachedPlan = null;
+
+            public Organization()
+            {
+                ApiToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{Config.Github.User}:{Config.Github.Token}"));
+            }
+
+            public async Task<models.Plan> GetPlanAsync()
+            {
+                if (cachedPlan == null)
+                {
+                    var org = await Get<models.Organization>($"https://api.github.com/orgs/{Config.Github.Org}");
+                    cachedPlan = org.Plan;
+                }
+
+                return cachedPlan;
+            }
         }
 
         private async Task CacheTeamsAsync() {
