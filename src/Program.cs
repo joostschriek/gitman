@@ -60,11 +60,6 @@ namespace gitman
             Console.WriteLine("\n\nChecking repo collaborators");
             var wrapper = new GitWrapper(client);
 
-            if (Config.HasRepoStructureFile) {
-                Console.WriteLine("Checking repository access");
-                await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
-            }
-
             Console.WriteLine("\n\nChecking branch protections");
             await new Protection() { Client = client }.Do();
 
@@ -75,13 +70,19 @@ namespace gitman
             if (Config.HasTeamsStructureFile)
             {
                 var teams = GetTeams();
-                
+
                 Console.WriteLine("\n\nChecking teams");
                 await new Teams(audit.Data, teams) { Client = client }.Do();
 
                 Console.WriteLine("\n\nChecking teams memberships");
                 await new TeamMemberships(audit.Data, teams) { Client = client }.Do();
             }
+
+            if (Config.HasRepoStructureFile) {
+                Console.WriteLine("Checking repository access");
+                await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
+            }
+
         }
 
         private static Dictionary<string, List<string>> GetTeams() 
