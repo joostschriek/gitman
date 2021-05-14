@@ -11,12 +11,12 @@ namespace gitman {
 
         private RepositoryDescription description;
 
-        private Audit.AuditDto auditData;
+        private IEnumerable<string> proposed_teams;
 
-        public RepositoryAccess(RepositoryDescription description, Audit.AuditDto auditData) 
+        public RepositoryAccess(RepositoryDescription description, IEnumerable<string> proposed_teams) 
         {
             this.description = description;
-            this.auditData = auditData;
+            this.proposed_teams = proposed_teams;
         }
 
         public override async Task Do()
@@ -26,7 +26,7 @@ namespace gitman {
             if (Config.Validate)
             {
                 // Make sure the configuration can work
-                l("Validating RepositiryDescription team names and list references");
+                l("Validating RepositoryDescription team names and list references");
                 await Validate();
             }
 
@@ -45,11 +45,11 @@ namespace gitman {
 
         internal async Task Validate() 
         {    
-            // Validate team names
-            var existingTeams = await Wrapper.GetTeamsAsync();
-            var teamsFromConfig = auditData.Teams.Values;
+            // Validate team names.
+            var existingTeams = proposed_teams == default(IEnumerable<string>) ? await Wrapper.GetTeamsAsync() : proposed_teams;
             var teamNames = description.TeamDescriptions.Select(t => t.TeamName);
-            var teamDoesNotExist = teamNames.Where(t => !teamsFromConfig.Any(tfc => tfc.Equals(t)));
+            var teamDoesNotExist = teamNames.Where(t => !existingTeams.Any(tfc => tfc.Equals(t)));
+
 
             // validates repo list references to actual repo lists
             var repoListRefs = description.TeamDescriptions.SelectMany(t => new [] { t.Not, t.Only } ).Where(r => !string.IsNullOrEmpty(r)).Distinct();

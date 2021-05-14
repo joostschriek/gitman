@@ -67,20 +67,25 @@ namespace gitman
             var audit = new Audit(outputPath: Config.ReportingPath) { Client = client };
             await audit.Do();
 
+            var proposed_teams = default(IEnumerable<string>);
+
             if (Config.HasTeamsStructureFile)
             {
                 var teams = GetTeams();
+
+                proposed_teams = teams.Keys;
 
                 Console.WriteLine("\n\nChecking teams");
                 await new Teams(audit.Data, teams) { Client = client }.Do();
 
                 Console.WriteLine("\n\nChecking teams memberships");
                 await new TeamMemberships(audit.Data, teams) { Client = client }.Do();
+
             }
 
             if (Config.HasRepoStructureFile) {
                 Console.WriteLine("Checking repository access");
-                await new RepositoryAccess(GetRepositoryDescription(), audit.Data) { Client = client, Wrapper = wrapper }.Do();
+                await new RepositoryAccess(GetRepositoryDescription(), proposed_teams) { Client = client, Wrapper = wrapper }.Do();
             }
 
         }
