@@ -24,10 +24,9 @@ namespace gitman
         public async Task<GitTeam> GetTeamAsync(string name) {
             await CacheTeamsAsync();
             var team = teamsByIds.SingleOrDefault(t => t.Key.Equals(name));
-            if (team.Equals(default(KeyValuePair<int, Team>))) {
-                return null;
+            if (team.Equals(default(KeyValuePair<string, Team>))) {
+                return new GitTeam();
             }
-
             return new GitTeam(team.Value);
         }
 
