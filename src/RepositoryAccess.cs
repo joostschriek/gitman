@@ -11,9 +11,12 @@ namespace gitman {
 
         private RepositoryDescription desciption;
 
-        public RepositoryAccess(RepositoryDescription description) 
+        private Audit.AuditDto auditData;
+
+        public RepositoryAccess(RepositoryDescription description, Audit.AuditDto auditData) 
         {
             this.desciption = description;
+            this.auditData = auditData;
         }
 
         public override async Task Do()
@@ -44,8 +47,9 @@ namespace gitman {
         {    
             // Validate team names
             var existingTeams = await Wrapper.GetTeamsAsync();
+            var teamsFromConfig = auditData.Teams.Values;
             var teamNames = desciption.TeamDescriptions.Select(t => t.TeamName);
-            var teamDoesNotExist = teamNames.Where(t => !existingTeams.Any(et => et.Equals(t)));
+            var teamDoesNotExist = teamNames.Where(t => !teamsFromConfig.Any(tfc => tfc.Equals(t)));
 
             // validates repo list references to actual repo lists
             var repoListRefs = desciption.TeamDescriptions.SelectMany(t => new [] { t.Not, t.Only } ).Where(r => !string.IsNullOrEmpty(r)).Distinct();

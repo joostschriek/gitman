@@ -80,7 +80,7 @@ namespace gitman
 
             if (Config.HasRepoStructureFile) {
                 Console.WriteLine("Checking repository access");
-                await new RepositoryAccess(GetRepositoryDescription()) { Client = client, Wrapper = wrapper }.Do();
+                await new RepositoryAccess(GetRepositoryDescription(), audit.Data) { Client = client, Wrapper = wrapper }.Do();
             }
 
         }
