@@ -109,7 +109,7 @@ namespace gitman
             if (!string.IsNullOrEmpty(outputPath))
             {
                 var path = Path.Combine(outputPath, $"audit_{DateTime.Now.ToString("yyy-MM-dd-hhmm")}.json");
-                l($"Saving audit repot to {path}", 1);
+                l($"Saving audit report to {path}", 1);
                 using var writer = new StreamWriter(path);
                 JSON.Serialize(Data, writer, Jil.Options.PrettyPrintCamelCase);
             }

@@ -9,11 +9,14 @@ namespace gitman {
     {
         public IGitWrapper Wrapper { get; set; }
 
-        private RepositoryDescription desciption;
+        private RepositoryDescription description;
 
-        public RepositoryAccess(RepositoryDescription description) 
+        private IEnumerable<string> proposed_teams;
+
+        public RepositoryAccess(RepositoryDescription description, IEnumerable<string> proposed_teams) 
         {
-            this.desciption = description;
+            this.description = description;
+            this.proposed_teams = proposed_teams;
         }
 
         public override async Task Do()
@@ -23,17 +26,17 @@ namespace gitman {
             if (Config.Validate)
             {
                 // Make sure the configuration can work
-                l("Validating RepositiryDescription team names and list references");
+                l("Validating RepositoryDescription team names and list references");
                 await Validate();
             }
 
             // Resolve and apply the collaborators
-            foreach (var team in desciption.TeamDescriptions)
+            foreach (var team in description.TeamDescriptions)
             {
                 // Resolve the repo lists
                 IEnumerable<string> not = null, only = null;
-                ResolveList(desciption.RepoLists, team.Not, ref not);
-                ResolveList(desciption.RepoLists, team.Only, ref only);
+                ResolveList(description.RepoLists, team.Not, ref not);
+                ResolveList(description.RepoLists, team.Only, ref only);
 
                 // Check the collaborators
                 await new Collaborators(Wrapper, team.TeamName, team.Permission, only, not) { Client = this.Client }.Do();
@@ -42,14 +45,15 @@ namespace gitman {
 
         internal async Task Validate() 
         {    
-            // Validate team names
-            var existingTeams = await Wrapper.GetTeamsAsync();
-            var teamNames = desciption.TeamDescriptions.Select(t => t.TeamName);
-            var teamDoesNotExist = teamNames.Where(t => !existingTeams.Any(et => et.Equals(t)));
+            // Validate team names.
+            var existingTeams = proposed_teams == default(IEnumerable<string>) ? await Wrapper.GetTeamsAsync() : proposed_teams;
+            var teamNames = description.TeamDescriptions.Select(t => t.TeamName);
+            var teamDoesNotExist = teamNames.Where(t => !existingTeams.Any(tfc => tfc.Equals(t)));
+
 
             // validates repo list references to actual repo lists
-            var repoListRefs = desciption.TeamDescriptions.SelectMany(t => new [] { t.Not, t.Only } ).Where(r => !string.IsNullOrEmpty(r)).Distinct();
-            var repoListDoesNotExist = repoListRefs.Where(r => !desciption.RepoLists.ContainsKey(r));
+            var repoListRefs = description.TeamDescriptions.SelectMany(t => new [] { t.Not, t.Only } ).Where(r => !string.IsNullOrEmpty(r)).Distinct();
+            var repoListDoesNotExist = repoListRefs.Where(r => !description.RepoLists.ContainsKey(r));
             
             var message = "";
             if (teamDoesNotExist.Any())
@@ -60,7 +64,7 @@ namespace gitman {
             }
             if (repoListDoesNotExist.Any())
             {
-                message += "Repo list referece do not match pre-defined list\n";
+                message += "Repo list reference do not match pre-defined list\n";
                 message += string.Join("\n", repoListDoesNotExist.Select(r => $"\t - {r}").ToArray());
                 message += "\n";
             }
