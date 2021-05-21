@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 
-namespace gitman.Services.GitGraph
+namespace gitman.Services.Git.DTOs
 {
 
-    public partial class Welcome
+    public partial class RepoPrmissionsSources
     {
         public Data Data { get; set; }
     }
@@ -47,7 +47,7 @@ namespace gitman.Services.GitGraph
 
     public partial class Source
     {
-        public ResourcePath? ResourcePath { get; set; }
+        public string? ResourcePath { get; set; }
     }
 
     public partial class PageInfo

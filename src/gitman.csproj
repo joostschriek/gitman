@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="GraphQL.Client" Version="3.2.3" />
+    <PackageReference Include="GraphQL.Client.Abstractions" Version="3.2.3" />
+    <PackageReference Include="GraphQL.Client.Serializer.SystemTextJson" Version="3.2.3" />
+    <PackageReference Include="GraphQL.Primitives" Version="3.2.3" />
     <PackageReference Include="jil" Version="2.17.0" />
     <PackageReference Include="mono.options" Version="6.6.0.161" />
     <PackageReference Include="octokit" Version="0.48.0" />

@@ -23,36 +23,50 @@ namespace gitman
         public override async Task Check(List<Repository> all_repos, Repository repo)
         {
             l($"Checking collaborators permissions for {repo.Name}");
+            var graph = new gitman.Services.Git.GitGraph();
+
+            var collabs = await graph.GetRepositoryPermissions(repo.Name);
+
             // For all the collaborators get their current permissions
-            var collabs = await Client.Repository.Collaborator.GetAll(Config.Github.Org, repo.Name);
+            // var collabs = await Client.Repository.Collaborator.GetAll(Config.Github.Org, repo.Name);
 
-            var conn = new Octokit.GraphQL.Connection(new Octokit.GraphQL.ProductHeaderValue("SuperMassiveCLI"), Config.Github.Token);
+            // var conn = new Octokit.GraphQL.Connection(new Octokit.GraphQL.ProductHeaderValue("SuperMassiveCLI"), Config.Github.Token);
             
-            var query = new Octokit.GraphQL.Query()
-                .Repository(Variable.Var(Config.Github.Org), Variable.Var(repo.Name))
-                .Collaborators()
-                .Edges
-                .Select(re => new {
-                    perm = re.Permission
-                });
-            var res = await conn.Run(query);
-            foreach (var member in collabs)
-            {
-                var currentPermission = await Client.Repository.Collaborator.ReviewPermission(Config.Github.Org, repo.Name, member.Login);
-                // resolve their highest possible permissions
-                var proposedPermissions = ResolvePermissionsFor(repo.Name, member.Login);
-                l($"[CHECK] {member.Login} has {currentPermission.Permission.StringValue} but has proposed {proposedPermissions}", 1);
+            // var query = new Octokit.GraphQL.Query()
+            //     .Repository(Variable.Var(Config.Github.Org), Variable.Var(repo.Name))
+            //     .Collaborators()
+            //     .Select(a => a.Edges.Select(b => b.))
+            //     .AllPages()
+            //     .Select(user => new {
+            //         id = user.Id,
+            //         login = user.Login,
+                    
+            //     });
+            //     // .Nodes                
+            //     // .Edges
+            //     // .Select(re => new {
+            //     //     perm = re.Permission
+            //     // });
 
-                // and test to see if we need to update them
-                if (currentPermission.Permission.Value == proposedPermissions)
-                {
-                    l($"[SKIP] {member.Login} is set properly at {currentPermission.Permission.StringValue}", 1);
-                }
-                else
-                {
-                    l($"[UPDATE] Should set {member.Login} from {currentPermission.Permission.StringValue} to {proposedPermissions}", 1);
-                }
-            }
+            // var res = await conn.Run(query);
+            l("ok?");
+            // foreach (var member in collabs)
+            // {
+            //     var currentPermission = await Client.Repository.Collaborator.ReviewPermission(Config.Github.Org, repo.Name, member.Login);
+            //     // resolve their highest possible permissions
+            //     var proposedPermissions = ResolvePermissionsFor(repo.Name, member.Login);
+            //     l($"[CHECK] {member.Login} has {currentPermission.Permission.StringValue} but has proposed {proposedPermissions}", 1);
+
+            //     // and test to see if we need to update them
+            //     if (currentPermission.Permission.Value == proposedPermissions)
+            //     {
+            //         l($"[SKIP] {member.Login} is set properly at {currentPermission.Permission.StringValue}", 1);
+            //     }
+            //     else
+            //     {
+            //         l($"[UPDATE] Should set {member.Login} from {currentPermission.Permission.StringValue} to {proposedPermissions}", 1);
+            //     }
+            // }
         }
 
         public override Task Action(Repository repo)

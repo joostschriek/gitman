@@ -69,7 +69,7 @@ namespace gitman
 
             Console.WriteLine("\n\nPerforming team audit");
             var audit = new Audit(outputPath: Config.ReportingPath) { Client = client };
-            await audit.Do();
+            // await audit.Do();
 
             if (Config.HasTeamsStructureFile)
             {
@@ -78,11 +78,11 @@ namespace gitman
                 Console.WriteLine("Checking the right permissions");
                 await new OnlyTeams(GetRepositoryDescription(), audit.Data, teams) { Client = client }.Do();
 
-                Console.WriteLine("\n\nChecking teams");
-                await new Teams(audit.Data, teams) { Client = client }.Do();
+                // Console.WriteLine("\n\nChecking teams");
+                // await new Teams(audit.Data, teams) { Client = client }.Do();
 
-                Console.WriteLine("\n\nChecking teams memberships");
-                await new TeamMemberships(audit.Data, teams) { Client = client }.Do();
+                // Console.WriteLine("\n\nChecking teams memberships");
+                // await new TeamMemberships(audit.Data, teams) { Client = client }.Do();
             }
         }
 
