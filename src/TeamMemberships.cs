@@ -44,7 +44,7 @@ namespace gitman
                 l("Validating available license seats");
                 plan = await wrapper.Org.GetPlanAsync();
                 var totalProposedMembers = teams.Values.SelectMany(m => m).Distinct().Count();
-                orgHasEnoughSeats = plan.Seats > totalProposedMembers;
+                orgHasEnoughSeats = plan.Seats >= totalProposedMembers;
                 l($"We have {plan.Seats} available, and {totalProposedMembers} total proposed members", 1);
             }
 
