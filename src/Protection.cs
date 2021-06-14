@@ -22,7 +22,7 @@ namespace gitman
 
         public override async Task Check(List<Repository> all_repos, Repository repo)
         {
-            var message = UPDATE;            
+            var message = UPDATE;
             if (await ShouldUnsetStrict(repo))
             {
                 if (!message.Equals(UPDATE)) message += " and ";
@@ -35,9 +35,15 @@ namespace gitman
                 message += $"will add {reviewers} review enforcement, unset stale reviewers and require code owners reviews";
             }
 
+            if (await ShouldSetEnforceForAdmins(repo))
+            {
+                if (!message.Equals(UPDATE)) message += " and ";
+                message += $"will enforcement admin requiring build checks to pass";
+            }
+
             if (message.Equals(UPDATE))
             {
-                l($"[OK] {repo.Name} already has {repo.DefaultBranch} branch protection with the number of reviewers, non-strict and code owners reviews", 1);
+                l($"[OK] {repo.Name} already has {repo.DefaultBranch} branch protection with the number of reviewers, non-strict, code owners reviews. and admins are required to pass build checks", 1);
             }
             else
             {
@@ -46,26 +52,30 @@ namespace gitman
             }
         }
 
-        private async Task<bool> ShouldUnsetStrict(Repository repo) 
+        private async Task<bool> ShouldUnsetStrict(Repository repo)
         {
             var should = false;
-            try {
+            try
+            {
                 var statusChecks = await Client.Repository.Branch.GetRequiredStatusChecks(repo.Owner.Login, repo.Name, repo.DefaultBranch);
                 this.cachedStatusContexts.Add(repo.Name, statusChecks);
-                if (statusChecks.Strict) 
+                if (statusChecks.Strict)
                 {
                     should = true;
                 }
-            } catch (Octokit.NotFoundException) { 
+            }
+            catch (Octokit.NotFoundException)
+            {
                 // no-op -- we didn't find any restrictions so that is good. 
             }
             return should;
         }
 
-        private async Task<bool> ShouldSetReviewers(Repository repo) 
+        private async Task<bool> ShouldSetReviewers(Repository repo)
         {
             var should = false;
-            try {
+            try
+            {
                 var requiredReviewers = await Client.Repository.Branch.GetBranchProtection(repo.Owner.Login, repo.Name, repo.DefaultBranch);
                 // Does not have the required amount of reviewers?
                 var hasReviewers = requiredReviewers?.RequiredPullRequestReviews == null || requiredReviewers.RequiredPullRequestReviews.RequiredApprovingReviewCount >= reviewers;
@@ -75,7 +85,9 @@ namespace gitman
                 var requireOwners = requiredReviewers?.RequiredPullRequestReviews?.RequireCodeOwnerReviews ?? false;
 
                 should = !hasReviewers || dismissStaleReviews || !requireOwners;
-            } catch (Octokit.NotFoundException) {
+            }
+            catch (Octokit.NotFoundException)
+            {
                 // this usually means that it's a new repo, and we have to set it up
                 should = true;
             }
@@ -83,30 +95,53 @@ namespace gitman
             return should;
         }
 
+        private async Task<bool> ShouldSetEnforceForAdmins(Repository repo)
+        {
+            var should = false;
+            try 
+            {
+                var enforceAdmins = await Client.Repository.Branch.GetAdminEnforcement(Config.Github.Org, repo.Name, repo.DefaultBranch);
+                // We want to enforce even admins to go thru all the checks :eye-roll:
+                should = !enforceAdmins.Enabled;
+            } 
+            catch (Octokit.NotFoundException)
+            {
+                should = true;
+            }
+
+            return true;
+        }
+
         public override async Task Action(Repository repo)
         {
-            try {
+            try
+            {
                 BranchProtectionRequiredStatusChecks statusChecks;
                 BranchProtectionRequiredStatusChecksUpdate statusChecksUpdate;
 
-                if (cachedStatusContexts.TryGetValue(repo.Name, out statusChecks)) {
+                if (cachedStatusContexts.TryGetValue(repo.Name, out statusChecks))
+                {
                     statusChecksUpdate = new BranchProtectionRequiredStatusChecksUpdate(false, statusChecks.Contexts);
-                } else {
+                }
+                else
+                {
                     statusChecksUpdate = new BranchProtectionRequiredStatusChecksUpdate(false, EmptyContexts);
                 }
 
-                l($"[MODIFING] Setting branch protections on {repo.Name} to unstrict, require code owners reviews and with contexts {string.Join(",", statusChecksUpdate.Contexts)} ", 1);
+                l($"[MODIFING] Setting branch protections on {repo.Name} to unstrict, require code owners reviews and with contexts {string.Join(",", statusChecksUpdate.Contexts)} and enforcing admin required build checks.", 1);
                 await Client.Repository.Branch.UpdateBranchProtection(
                     repo.Owner.Login,
-                    repo.Name, 
-                    repo.DefaultBranch, 
+                    repo.Name,
+                    repo.DefaultBranch,
                     new BranchProtectionSettingsUpdate(
                         statusChecksUpdate,
                         new BranchProtectionRequiredReviewsUpdate(false, true, reviewers),
-                        false
+                        true
                     )
                 );
-            } catch (Octokit.NotFoundException) {
+            }
+            catch (Octokit.NotFoundException)
+            {
                 l($"[WARN] could not set anything on {repo.Name} because {repo.DefaultBranch} does not exist.", 1);
             }
         }
