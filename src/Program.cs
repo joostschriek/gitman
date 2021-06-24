@@ -53,13 +53,11 @@ namespace gitman
 
             client = new GitHubClient(new ProductHeaderValue("SuperMassiveCLI"));
             client.Credentials = new Credentials(Config.Github.User, Config.Github.Token);
+            var wrapper = new GitWrapper(client);
 
             Console.WriteLine("\n\nChecking merge setting");
             await new Merging(squash: true) { Client = client }.Do();
             
-            Console.WriteLine("\n\nChecking repo collaborators");
-            var wrapper = new GitWrapper(client);
-
             Console.WriteLine("\n\nChecking branch protections");
             await new Protection() { Client = client }.Do();
 
@@ -80,11 +78,10 @@ namespace gitman
 
                 Console.WriteLine("\n\nChecking teams memberships");
                 await new TeamMemberships(audit.Data, teams) { Client = client }.Do();
-
             }
 
             if (Config.HasRepoStructureFile) {
-                Console.WriteLine("Checking repository access");
+                Console.WriteLine("\n\nChecking collaborators repository access");
                 await new RepositoryAccess(GetRepositoryDescription(), proposed_teams) { Client = client, Wrapper = wrapper }.Do();
             }
 
