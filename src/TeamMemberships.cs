@@ -79,7 +79,7 @@ namespace gitman
                 {
                     if (action.Action == Acting.Act.Add)
                     {
-                        // We only want to process the actions if we don't have enough seats
+                        // We only want to process the actions if we have have enough seats
                         if (orgHasEnoughSeats)
                         {
                             l($"[UPDATE] Will add {action.Name} to team {team_name} ({team_id}) as a member", 1);
