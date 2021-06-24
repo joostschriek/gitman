@@ -25,7 +25,8 @@ namespace gitman
             {
                 throw new Exception("Audit data has to be set!");
             }
-
+            
+            var pendingInvitations = new List<String>();
             var usersDoNotExist = new List<string>();
             var orgHasEnoughSeats = true;
             models.Plan plan = null;
@@ -47,6 +48,8 @@ namespace gitman
                 orgHasEnoughSeats = plan.Seats >= totalProposedMembers;
                 l($"We have {plan.Seats} available, and {totalProposedMembers} total proposed members", 1);
             }
+
+            pendingInvitations.AddRange((await Client.Organization.Member.GetAllPendingInvitations(Config.Github.Org)).Select(i => i.Login));
 
             foreach (var team in this.teams)
             {
@@ -71,12 +74,12 @@ namespace gitman
                     actions.AddRange(proposed_members.Select(m => new Acting { Action = Acting.Act.Add, Name = m }));
                 }
 
-                // And then actually do those modifications them.
+                // And then actually do those modifications.
                 foreach (var action in actions.OrderBy(a => a.Name))
                 {
                     if (action.Action == Acting.Act.Add)
                     {
-                        // We only want to process the removals if we don't have enough seats
+                        // We only want to process the actions if we don't have enough seats
                         if (orgHasEnoughSeats)
                         {
                             l($"[UPDATE] Will add {action.Name} to team {team_name} ({team_id}) as a member", 1);
@@ -84,6 +87,12 @@ namespace gitman
                         else
                         {
                             l($"[SKIP] Will not add {action.Name} to team {team_name} ({team_id}) as a member becaues we do not have enough license seats", 1);
+                            continue;
+                        }
+
+                        if (pendingInvitations.Contains(action.Name))
+                        {
+                            l($"[SKIP] {action.Name} already has a pending invitation.", 1);
                             continue;
                         }
 
